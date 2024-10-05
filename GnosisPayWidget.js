@@ -1,14 +1,32 @@
 // Constants
-const SAFE_ADDRESS = "" //Add your Gnosis Pay Safe Address here 
+const SAFE_ADDRESS = "" // add gnosis pay safe address here
 const EURE_CONTRACT = "0xcB444e90D8198415266c6a2724b7900fb12FC56E"
 const RPC_ENDPOINT = "https://rpc.gnosischain.com"
 const TEXT_COLOR = new Color("#F0EBDE")
 const LOGO_URL = "https://i.ibb.co/9tbNNwF/IMG-2725.png"
 const BACKGROUND_COLOR = new Color("#133629")
+const LAST_REFRESH_FILE = "lastRefreshTime.txt"
 
-// Simula font as per brand kit
+// Font selection
 function getFont(size, weight = "regular") {
   return new Font("Simula", size)
+}
+
+// File operations for last refresh time
+function saveLastRefreshTime() {
+  const fm = FileManager.local()
+  const path = fm.joinPath(fm.documentsDirectory(), LAST_REFRESH_FILE)
+  fm.writeString(path, new Date().toISOString())
+}
+
+function getLastRefreshTime() {
+  const fm = FileManager.local()
+  const path = fm.joinPath(fm.documentsDirectory(), LAST_REFRESH_FILE)
+  if (fm.fileExists(path)) {
+    const dateString = fm.readString(path)
+    return new Date(dateString)
+  }
+  return null
 }
 
 // Fetch balance from RPC
@@ -40,13 +58,15 @@ async function getBalance() {
   }
 }
 
-// Slice and dice address
+// Utility functions
 const getShortAddress = address => `${address.slice(0, 6)}...${address.slice(-4)}`
 
 function getTimestamp() {
+  const lastRefreshTime = getLastRefreshTime()
+  if (!lastRefreshTime) return "N/A"
+  
   const now = new Date()
-  const lastUpdate = new Date(now - 2 * 60 * 1000)
-  const diff = Math.floor((now - lastUpdate) / 1000 / 60)
+  const diff = Math.floor((now - lastRefreshTime) / 1000 / 60)
   return diff < 1 ? "now" : `${diff}m ago`
 }
 
@@ -122,6 +142,9 @@ async function main() {
   } else {
     widget.presentSmall()
   }
+  
+  // Save the refresh time after creating the widget
+  saveLastRefreshTime()
 }
 
 await main()
